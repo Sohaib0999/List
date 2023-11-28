@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <title>DB Sign In</title>
+</head>
+
+<body class="body-body">
+
+    <!-- ---------------------------------------------------------------- -->
+
+    <div id="main-body">
+        <h1 id="heading">Sign In</h1><br>
+        <input id="username-input" minlength="20" maxlength="30" placeholder="Username" type="text"><br>
+        <input id="password-input" minlength="15" maxlength="10" placeholder="Password" type="password"><br>
+        <span id="show-pass">Show Pass <input id="pass-check" type="checkbox" onclick="checked_func()"></span><br><br>
+        <a id="create-acc" href="SignUp.html">Create Account</a><br><br><br>
+        <span id="span-but-signin"">Sign In</span>
+    </div>
+
+    <!-- ---------------------------------------------------------------- -->
+
+    <script type="module">
+
+        sessionStorage.clear();
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmwM7U3KCustjpArt02b_f6gM64P3jP2U",
+            authDomain: "todo-list-5dcd4.firebaseapp.com",
+            databaseURL: "https://todo-list-5dcd4-default-rtdb.firebaseio.com",
+            projectId: "todo-list-5dcd4",
+            storageBucket: "todo-list-5dcd4.appspot.com",
+            messagingSenderId: "1019910951218",
+            appId: "1:1019910951218:web:d94bb4eea74d75ad6ec72b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        var username_in = document.getElementById("username-input");
+        var password_in = document.getElementById("password-input");
+
+        var signin = document.getElementById("span-but-signin");
+        var signup = document.getElementById("span-but-signup");
+
+        var userdata = {};
+
+        document.getElementById("span-but-signin").addEventListener('click', function (e) {
+            if (username_in.value.length >= 3 && password_in.value.length >= 8) {
+                e.preventDefault();
+                SignIn(username_in.value); 
+            }           
+        });
+
+        document.getElementById("password-input").addEventListener('keypress', function (e) {
+            if (e.keyCode === 13 && username_in.value.length >= 3 && password_in.value.length >= 8) {
+                e.preventDefault();
+                SignIn(username_in.value); 
+            }       
+        });
+
+        document.getElementById("username-input").addEventListener('keypress', function (e) {
+            if (e.keyCode === 13 && username_in.value.length >= 3 && password_in.value.length >= 8) {
+                e.preventDefault();
+                SignIn(username_in.value); 
+            }            
+        });
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function check_account_cus(user_var) {
+            userdata = {};
+            get(child(ref(db), 'Users/')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.val();[Object.keys(snapshot.val())[0]];
+                    var db_array = Object.values(snapshot.val());
+                    for (var i = 0; i < db_array.length; i++) {
+                        if (db_array[i].username === user_var) {
+                            userdata = {
+                                name: db_array[i].username,
+                                pass: db_array[i].password
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function SignIn(user_var_in) {
+            var temp_user = false;
+            get(child(ref(db), 'Users/')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.val();[Object.keys(snapshot.val())[0]];
+                    var db_array = Object.values(snapshot.val());
+                    for (var i = 0; i < db_array.length; i++) {
+                        if (db_array[i].username === user_var_in) {
+                            temp_user = true;
+                            username_in.placeholder = "Username";
+                            if(db_array[i].password === password_in.value){
+                                username_in.value = "";
+                                password_in.value = "";
+                                password_in.placeholder = "Password";
+                                username_in.placeholder = "Username";
+                                sessionStorage.setItem("userlogged", user_var_in);   
+                                sessionStorage.setItem("userloggedpass", db_array[i].password);                            
+                                window.open ("list.html", "_self");
+                            } else if (db_array[i].password !== password_in.value) {
+                                password_in.value = "";
+                                password_in.placeholder = "Wrong Password !";
+                                console.log("Wrong Password !");
+                            }
+                        } 
+                    }
+                    if(temp_user === false) {
+                        console.log("User Not Found !");
+                        username_in.value = "";
+                        password_in.value = "";
+                        username_in.placeholder = "User Not Found!";
+                    }
+                }
+            });
+        }
+
+        function db_logging() {
+            check_account_cus(username_in.value);
+            sleep(1000).then(() => {
+                console.log(userdata.name);
+                if (userdata.name === undefined) {
+                    console.log("Available !");
+                    set(ref(db, 'Users/' + document.getElementById("username-input").value),
+                        {
+                            username: username_in.value,
+                            password: password_in.value
+                        });
+                } else {
+                    console.log("Not Avaiable !");
+                }
+            });
+        }
+
+    </script>
+    <script src="Index.js"></script>
+
+</body>
+
+</html>

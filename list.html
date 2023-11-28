@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="list.css">
+    <title>Check List</title>
+</head>
+
+<body>
+
+    <!-- --------------------------------------------------------- -->
+
+    <div id="main-div">
+        <div id="myDIV" class="header">
+            <h2 onclick="home_func()" id="my-list-id">My To Do List</h2>
+            <input type="text" id="myInput" placeholder="Add New Item">
+            <span onclick="addListAfterClick()" id="MySpan" class="addBtn">Add</span>
+            <span id="MySaveBtn" class="savebtn">Save</span>
+        </div>
+
+        <h1 id="Subheading">Your List</h1>
+
+        <ul id="My-Ul">
+
+        </ul>
+    </div>
+
+    <!-- --------------------------------------------------------- -->
+
+    <script type="module">
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmwM7U3KCustjpArt02b_f6gM64P3jP2U",
+            authDomain: "todo-list-5dcd4.firebaseapp.com",
+            databaseURL: "https://todo-list-5dcd4-default-rtdb.firebaseio.com",
+            projectId: "todo-list-5dcd4",
+            storageBucket: "todo-list-5dcd4.appspot.com",
+            messagingSenderId: "1019910951218",
+            appId: "1:1019910951218:web:d94bb4eea74d75ad6ec72b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        var username_in = document.getElementById("username-input");
+        var password_in = document.getElementById("password-input");
+
+        var signin = document.getElementById("span-but-signin");
+        var signup = document.getElementById("span-but-signup");
+
+        var u_list = document.getElementById("My-Ul");
+
+        var userdata = {};
+
+        var user_val_name = sessionStorage.getItem("userlogged");
+        var user_val_pass = sessionStorage.getItem("userloggedpass");
+
+        var temp_user_data = "";
+
+        document.getElementById("MySaveBtn").addEventListener('click', function (e) {
+            save_func();
+        });
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function check_account_cus(user_var) {
+            userdata = {};
+            get(child(ref(db), 'Users/')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.val();[Object.keys(snapshot.val())[0]];
+                    var db_array = Object.values(snapshot.val());
+                    for (var i = 0; i < db_array.length; i++) {
+                        if (db_array[i].username === user_var) {
+                            userdata = {
+                                name: db_array[i].username,
+                                pass: db_array[i].password
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function download_data(custom_name) {
+            var db_array;
+            get(child(ref(db), 'Users/' + custom_name)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.val();[Object.keys(snapshot.val())[0]];
+                    db_array = Object.values(snapshot.val());
+                    u_list.innerHTML = db_array[0];
+                }
+            });
+
+            return temp_user_data = "Array ka data" + db_array;
+
+        }
+
+        function SignIn(user_var_in) {
+            var temp_user = false;
+            get(child(ref(db), 'Users/')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.val();[Object.keys(snapshot.val())[0]];
+                    var db_array = Object.values(snapshot.val());
+                    for (var i = 0; i < db_array.length; i++) {
+                        if (db_array[i].username === user_var_in) {
+                            temp_user = true;
+                            username_in.placeholder = "Username";
+                            if (db_array[i].password === password_in.value) {
+                                username_in.value = "";
+                                password_in.value = "";
+                                password_in.placeholder = "Password";
+                                username_in.placeholder = "Username";
+                                window.open("list.html", "_self");
+                            } else if (db_array[i].password !== password_in.value) {
+                                password_in.value = "";
+                                password_in.placeholder = "Wrong Password !";
+                            }
+                        }
+                    }
+                    if (temp_user === false) {
+                        console.log("User Not Found !");
+                        username_in.value = "";
+                        password_in.value = "";
+                        username_in.placeholder = "User Not Found!";
+                    }
+                }
+            });
+        }
+
+        function db_logging() {
+            check_account_cus(username_in.value);
+            sleep(1000).then(() => {
+                console.log(userdata.name);
+                if (userdata.name === undefined) {
+                    console.log("Available !");
+                    set(ref(db, 'Users/' + document.getElementById("username-input").value),
+                        {
+                            username: username_in.value,
+                            password: password_in.value
+                        });
+                } else {
+                    console.log("Not Avaiable !");
+                }
+            });
+        }
+
+        function save_func() {
+            var data_to_save = u_list.innerHTML;
+            set(ref(db, 'Users/' + user_val_name),
+                {
+                    username: user_val_name,
+                    password: user_val_pass,
+                    data: data_to_save
+                });
+        }
+
+        if (user_val_name !== null && user_val_pass !== null) {
+            download_data(user_val_name);
+        } else {
+            window.open("index.html", "_self");
+        }
+
+
+    </script>
+    <script src="list.js"></script>
+
+</body>
+
+</html>
